@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Nifty 50 Formula</title>
+  <style>
+    html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;background:#f9f9f9;color:#333}
+    body{display:flex;flex-direction:column;height:100vh}
+    header,footer{flex:0 0 auto;text-align:center;padding:.5rem}
+    header{background:#4CAF50;color:#fff}
+    footer{background:#333;color:#fff}
+    main{flex:1 1 auto;display:flex;flex-direction:column;justify-content:space-evenly;align-items:center;padding:.5rem;overflow:hidden}
+    section{width:95%;max-width:500px;background:#fff;border-radius:8px;padding:.5rem;box-shadow:0 2px 5px rgba(0,0,0,.1)}
+    .form-group{display:flex;align-items:center;margin:.25rem 0}
+    .form-group label{flex:0 0 70px;font-weight:bold;margin-right:.5rem}
+    .form-group input{flex:1;padding:.3rem;border:1px solid #ccc;border-radius:4px}
+    .result-box{background:#f0f0f0;padding:.5rem;border-radius:6px;margin-top:.25rem}
+    #decision{font-weight:bold;font-size:1.2em;text-align:center}
+    .flash-green{color:green;font-weight:bold}
+    .flash-red{color:red;font-weight:bold}
+    .pulse{animation:pulseAnim 1s ease}
+    @keyframes pulseAnim{0%{transform:scale(1);opacity:1}50%{transform:scale(1.2);opacity:.7}100%{transform:scale(1);opacity:1}}
+    .section-pulse{animation:bgPulse 1s ease}
+    @keyframes bgPulse{0%{background-color:inherit}50%{background-color:rgba(255,255,0,0.3)}100%{background-color:inherit}}
+  </style>
+</head>
+<body>
+  <header><h1>Nifty 50 Formula</h1></header>
+  <main>
+    <section id="section1">
+      <h2>Price Calculation</h2>
+      <form>
+        <div class="form-group"><label for="low">Low</label><input type="number" id="low" placeholder="Low"></div>
+        <div class="form-group"><label for="current">Current</label><input type="number" id="current" placeholder="Current"></div>
+        <div class="form-group"><label for="high">High</label><input type="number" id="high" placeholder="High"></div>
+      </form>
+      <div class="result-box"><p><strong>P1 (%):</strong> <span id="p1">0%</span></p></div>
+    </section>
+
+    <section id="section2">
+      <h2>Buyers & Sellers</h2>
+      <form>
+        <div class="form-group"><label for="buyers">Buyers</label><input type="number" id="buyers" placeholder="Buyers"></div>
+        <div class="form-group"><label for="sellers">Sellers</label><input type="number" id="sellers" placeholder="Sellers"></div>
+      </form>
+      <div class="result-box"><p><strong>P2 (%):</strong> <span id="p2">0%</span></p></div>
+    </section>
+
+    <section id="section3">
+      <h2>Decision</h2>
+      <div class="result-box">
+        <p><strong>Decision:</strong> <span id="decision">Waiting for inputs...</span></p>
+        <p><small>Last Updated: <span id="lastUpdated">--</span></small></p>
+      </div>
+    </section>
+  </main>
+  <footer><p>© 2026 My GitHub Pages Site</p></footer>
+
+  <audio id="buySound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" preload="auto"></audio>
+  <audio id="sellSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" preload="auto"></audio>
+
+  <script>
+    const lowInput=document.getElementById('low'),
+          currentInput=document.getElementById('current'),
+          highInput=document.getElementById('high'),
+          buyersInput=document.getElementById('buyers'),
+          sellersInput=document.getElementById('sellers');
+
+    const p1Span=document.getElementById('p1'),
+          p2Span=document.getElementById('p2'),
+          decisionSpan=document.getElementById('decision');
+
+    let p1Value=null,p2Value=null;
+
+    function updatePriceCalculation(){
+      const low=parseFloat(lowInput.value),
+            current=parseFloat(currentInput.value),
+            high=parseFloat(highInput.value);
+      if(!isNaN(low)&&!isNaN(current)&&!isNaN(high)){
+        const diff=high-low;
+        const p1=diff!==0?((current-low)/diff)*100:0;
+        p1Span.textContent=p1.toFixed(2)+"%";
+        p1Value=p1;
+      } else { p1Value=null }
+      updateDecision();
+    }
+
+    function updateBuyersSellers(){
+      const buyers=parseFloat(buyersInput.value),
+            sellers=parseFloat(sellersInput.value);
+      if(!isNaN(buyers)&&!isNaN(sellers)){
+        const total=buyers+sellers;
+        const buyersPercent=total!==0?(buyers/total)*100:0;
+        p2Span.textContent=buyersPercent.toFixed(2)+"%";
+        p2Value=buyersPercent;
+      } else { p2Value=null }
+      updateDecision();
+    }
+
+    function updateTimestamp(success=true){
+      const now=new Date();
+      const formatted=now.toLocaleString();
+      const ts=document.getElementById("lastUpdated");
+      ts.textContent=formatted;
+      ts.classList.add(success?"flash-green":"flash-red");
+      setTimeout(()=>ts.classList.remove("flash-green","flash-red"),1000);
+    }
+
+    function updateDecision(){
+      const section3=document.getElementById("section3");
+      const buySound=document.getElementById("buySound");
+      const sellSound=document.getElementById("sellSound");
+
+      if(p1Value!==null&&p2Value!==null){
+        let newDecision="No Action";
+        let newColor="black";
+
+        if(p2Value>67&&(p1Value<10||p1Value>90)){
+          newDecision="BUY"; newColor="green";
+          buySound.currentTime=0; buySound.play();
+        } else if(p2Value<33&&(p1Value<10||p1Value>90)){
+          newDecision="SELL"; newColor="red";
+          sellSound.currentTime=0; sellSound.play();
+        }
+
+        decisionSpan.textContent=newDecision;
+        decisionSpan.style.color=newColor;
+        decisionSpan.classList.add("pulse");
+        section3.classList.add("section-pulse");
+        setTimeout(()=>{decisionSpan.classList.remove("pulse");section3.classList.remove("section-pulse")},1000);
+      } else {
+        decisionSpan.textContent="Waiting for inputs...";
+        decisionSpan.style.color="black";
+      }
+    }
+
+    function simulateAllInputs(){
+      // Random price range
+      const low=Math.floor(Math.random()*10000)+15000; // 15000–25000
+      const high=low+Math.floor(Math.random()*500);    // up to +500
+      const current=low+Math.floor(Math.random()*(high-low));
+
+      lowInput.value=low;
+      currentInput.value=current;
+      highInput.value=high;
+      updatePriceCalculation();
+
+      // Random buyers/sellers
+      const buyers=Math.floor(Math.random()*900)+100;
+      const sellers=Math.floor(Math.random()*900)+100;
+      buyersInput.value=buyers;
+      sellersInput.value=sellers;
+      updateBuyersSellers();
+
+      updateTimestamp(true);
+    }
+
+    window.onload=()=>{
+      simulateAllInputs();
+      setInterval(simulateAllInputs,2000); // refresh every 5s
+    };
+  </script>
+</body>
+</html>
